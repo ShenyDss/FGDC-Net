@@ -136,7 +136,7 @@ class SwinTransformerBlock(nn.Module):
         self.W = None
 
     def forward(self, x, mask_matrix):
-        b, l, c = x.shape
+        b, _l, c = x.shape
         h, w = self.H, self.W
         shortcut = x
         x = self.norm1(x).view(b, h, w, c)
@@ -238,8 +238,16 @@ class BasicLayer(nn.Module):
         hp = int((h + self.window_size - 1) // self.window_size) * self.window_size
         wp = int((w + self.window_size - 1) // self.window_size) * self.window_size
         img_mask = torch.zeros((1, hp, wp, 1), device=x.device)
-        h_slices = (slice(0, -self.window_size), slice(-self.window_size, -self.shift_size), slice(-self.shift_size, None))
-        w_slices = (slice(0, -self.window_size), slice(-self.window_size, -self.shift_size), slice(-self.shift_size, None))
+        h_slices = (
+            slice(0, -self.window_size),
+            slice(-self.window_size, -self.shift_size),
+            slice(-self.shift_size, None),
+        )
+        w_slices = (
+            slice(0, -self.window_size),
+            slice(-self.window_size, -self.shift_size),
+            slice(-self.shift_size, None),
+        )
         cnt = 0
         for h_slice in h_slices:
             for w_slice in w_slices:
@@ -247,11 +255,15 @@ class BasicLayer(nn.Module):
                 cnt += 1
         mask_windows = window_partition(img_mask, self.window_size).view(-1, self.window_size * self.window_size)
         attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-        attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
+        attn_mask = attn_mask.masked_fill(attn_mask != 0, (-100.0)).masked_fill(attn_mask == 0, 0.0)
 
         for blk in self.blocks:
             blk.H, blk.W = h, w
-            x = checkpoint.checkpoint(blk, x, attn_mask, use_reentrant=False) if self.use_checkpoint else blk(x, attn_mask)
+            x = (
+                checkpoint.checkpoint(blk, x, attn_mask, use_reentrant=False)
+                if self.use_checkpoint
+                else blk(x, attn_mask)
+            )
         x_out, h_out, w_out = x, h, w
         if self.downsample is not None:
             x = self.downsample(x, h, w)
@@ -320,7 +332,9 @@ class SwinTransformer(nn.Module):
         )
         if self.ape:
             patches_resolution = (pretrain_img_size // patch_size, pretrain_img_size // patch_size)
-            self.absolute_pos_embed = nn.Parameter(torch.zeros(1, embed_dim, patches_resolution[0], patches_resolution[1]))
+            self.absolute_pos_embed = nn.Parameter(
+                torch.zeros(1, embed_dim, patches_resolution[0], patches_resolution[1])
+            )
             trunc_normal_(self.absolute_pos_embed, std=0.02)
         self.pos_drop = nn.Dropout(p=drop_rate)
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]

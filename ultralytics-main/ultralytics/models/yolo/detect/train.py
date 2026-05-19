@@ -189,7 +189,7 @@ class DetectionTrainer(BaseTrainer):
         self.loss_names = ("box_loss", "cls_loss", "dfl_loss")
         head = self.model.model[-1] if hasattr(self.model, "model") else None
         if getattr(head, "use_vfm", False):
-            self.loss_names = self.loss_names + ("vfm_cls", "vfm_reg")
+            self.loss_names = (*self.loss_names, "vfm_cls", "vfm_reg")
         return yolo.detect.DetectionValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
@@ -253,4 +253,3 @@ class DetectionTrainer(BaseTrainer):
         n = len(train_dataset)
         del train_dataset  # free memory
         return super().auto_batch(max_num_obj, dataset_size=n)
-
