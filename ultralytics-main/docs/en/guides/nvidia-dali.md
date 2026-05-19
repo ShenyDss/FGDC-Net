@@ -207,7 +207,6 @@ This applies to all external preprocessing paths — direct tensor input, video 
 
     ```python
     from nvidia.dali.plugin.pytorch import DALIGenericIterator
-
     from ultralytics import YOLO
 
     # Load model
@@ -283,7 +282,6 @@ For real-time video processing, use `fn.external_source` to feed frames from any
         import cv2
         import numpy as np
         import torch
-
         from ultralytics import YOLO
 
         model = YOLO("yolo26n.engine")  # TensorRT model

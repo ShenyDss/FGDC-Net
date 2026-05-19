@@ -76,7 +76,6 @@ Parking management with [Ultralytics YOLO26](https://github.com/ultralytics/ultr
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         # Video capture
