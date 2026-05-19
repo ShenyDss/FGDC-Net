@@ -440,7 +440,7 @@ Only the clean detector is deployed.
 
 ---
 
-## 🙏 Acknowledgements
+## 🙏 Acknowledgments
 
 This project is built upon the YOLO detection ecosystem and benefits from the open-source contributions of:
 
