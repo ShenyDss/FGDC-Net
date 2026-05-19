@@ -85,7 +85,6 @@ Train YOLO26n-cls on the MNIST160 dataset for 100 [epochs](https://www.ultralyti
     ```python
     import torch
     import torchvision.transforms as T
-
     from ultralytics import YOLO
     from ultralytics.data.dataset import ClassificationDataset
     from ultralytics.models.yolo.classify import ClassificationTrainer, ClassificationValidator
