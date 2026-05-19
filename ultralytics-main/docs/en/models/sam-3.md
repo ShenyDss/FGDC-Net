@@ -221,7 +221,6 @@ SAM 3 supports both Promptable Concept Segmentation (PCS) and Promptable Visual 
 
         ```python
         import cv2
-
         from ultralytics.models.sam import SAM3SemanticPredictor
         from ultralytics.utils.plotting import Annotator, colors
 
