@@ -258,7 +258,6 @@ YOLOE-26 supports both text-based and visual prompting. Using prompts is straigh
 
         ```python
         import numpy as np
-
         from ultralytics import YOLO
         from ultralytics.models.yolo.yoloe import YOLOEVPSegPredictor
 
