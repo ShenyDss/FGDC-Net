@@ -57,7 +57,6 @@ Object counting with [Ultralytics YOLO26](https://github.com/ultralytics/ultraly
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         cap = cv2.VideoCapture("path/to/video.mp4")
@@ -131,7 +130,6 @@ Here's a simple example for counting in a region:
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 
@@ -180,7 +178,6 @@ To count specific classes of objects using Ultralytics YOLO26, you need to speci
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 
