@@ -92,7 +92,9 @@ class DualPathDetect(nn.Module):
             else nn.ModuleList(Conv(c, c, 3, 1) for c in proj_ch)
         )
         self.reg_stem = nn.ModuleList(Conv(c, c, 3, 1) for c in proj_ch)
-        self.cls_pred = nn.ModuleList(nn.Identity() if use_fgdh else nn.Conv2d(c, self.na * self.nc, 1) for c in proj_ch)
+        self.cls_pred = nn.ModuleList(
+            nn.Identity() if use_fgdh else nn.Conv2d(c, self.na * self.nc, 1) for c in proj_ch
+        )
         self.reg_pred = nn.ModuleList(nn.Conv2d(c, self.na * 4, 1) for c in proj_ch)
         self.obj_pred = nn.ModuleList(nn.Conv2d(c, self.na, 1) for c in proj_ch)
         vfm_cls_teacher_channels = 768
@@ -129,7 +131,9 @@ class DualPathDetect(nn.Module):
             feat = self.proj[i](x[i])
             cls_feat, reg_feat = self.partition[i](feat)
             if self.training and self.use_vfm:
-                vfm_loss = self.vfm_guiders[i](cls_feat, reg_feat, teacher_inputs=self._vfm_features_for_scale(teacher_features, i))
+                vfm_loss = self.vfm_guiders[i](
+                    cls_feat, reg_feat, teacher_inputs=self._vfm_features_for_scale(teacher_features, i)
+                )
                 vfm_losses.append(vfm_loss)
                 vfm_cls_losses.append(self.vfm_guiders[i].last_cls_loss)
                 vfm_reg_losses.append(self.vfm_guiders[i].last_reg_loss)
