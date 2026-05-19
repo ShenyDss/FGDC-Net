@@ -25,7 +25,6 @@ The fastest path is a two-line export to [ONNX](../integrations/onnx.md) with no
 ```python
 import timm
 import torch
-
 from ultralytics.utils.export import torch2onnx
 
 model = timm.create_model("resnet18", pretrained=True).eval()
@@ -123,7 +122,6 @@ Requires `openvino>=2024.0.0` (or `>=2025.2.0` on macOS 15.4+) and `torch>=2.1`.
 
 ```python
 import coremltools as ct
-
 from ultralytics.utils.export import torch2coreml
 
 inputs = [ct.TensorType("input", shape=(1, 3, 224, 224))]
@@ -265,7 +263,6 @@ After exporting, verify numerical parity with the original PyTorch model before 
 import numpy as np
 import timm
 import torch
-
 from ultralytics.nn.backends import ONNXBackend
 
 model = timm.create_model("resnet18", pretrained=True).eval()

@@ -55,7 +55,6 @@ Monitoring workouts through pose estimation with [Ultralytics YOLO26](https://gi
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         cap = cv2.VideoCapture("path/to/video.mp4")
@@ -121,7 +120,6 @@ To monitor your workouts using Ultralytics YOLO26, you can utilize the [pose est
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
@@ -184,7 +182,6 @@ To save the workout monitoring output, you can modify the code to include a vide
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")

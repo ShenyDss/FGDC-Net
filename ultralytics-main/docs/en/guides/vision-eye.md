@@ -33,7 +33,6 @@ keywords: VisionEye, YOLO26, Ultralytics, object mapping, object tracking, dista
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         cap = cv2.VideoCapture("path/to/video.mp4")
@@ -126,7 +125,6 @@ To start using VisionEye Object Mapping with Ultralytics YOLO26, first, you'll n
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")

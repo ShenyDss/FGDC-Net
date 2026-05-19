@@ -12,10 +12,9 @@ import torch.nn.functional as F
 class DualPathVFMGuider(nn.Module):
     """Dual-path visual foundation model feature guider.
 
-    The guider distills semantic knowledge from a DINO-style teacher into the
-    classification branch, and localization knowledge from a Swin-style teacher
-    into the regression branch. Teacher weight loading is intentionally left as
-    an interface because DINOv3/Swin checkpoint key names may vary.
+    The guider distills semantic knowledge from a DINO-style teacher into the classification branch, and localization
+    knowledge from a Swin-style teacher into the regression branch. Teacher weight loading is intentionally left as an
+    interface because DINOv3/Swin checkpoint key names may vary.
 
     Args:
         cls_channels: Channel count of the detector classification feature F_cls.
@@ -105,10 +104,9 @@ class DualPathVFMGuider(nn.Module):
         Args:
             F_cls: Classification branch feature map, shape (B, C_cls, H, W).
             F_reg: Regression branch feature map, shape (B, C_reg, H, W).
-            teacher_inputs: Optional input for teacher encoders. If omitted,
-                F_cls is fed to the classification teacher and F_reg to the
-                regression teacher. When using image-level VFM teachers, pass
-                the corresponding image tensor or a dict with keys "cls"/"reg".
+            teacher_inputs: Optional input for teacher encoders. If omitted, F_cls is fed to the classification teacher
+                and F_reg to the regression teacher. When using image-level VFM teachers, pass the corresponding image
+                tensor or a dict with keys "cls"/"reg".
             return_teacher: If True, also return aligned teacher features.
 
         Returns:
