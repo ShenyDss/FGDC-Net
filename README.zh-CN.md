@@ -2,13 +2,9 @@
 
 **Fine-Grained Industrial Defect Detection via Dual-Path Feature Decoupling**
 
-FGDC-Net is a YOLO-based detector for fine-grained industrial defect inspection. It targets small, low-contrast, visually similar, and boundary-ambiguous defects that are hard for a standard coupled detection head.
+FGDC-Net 是一个面向工业缺陷检测的 YOLO 系列改进模型，主要用于小目标、弱纹理、类别相似、边界模糊等细粒度缺陷场景。
 
-This repository includes a YOLOv5 implementation and an Ultralytics-compatible implementation for YOLOv5, YOLOv8, and YOLO11 style models.
-
-> **Note**  
-> Due to privacy restrictions and potential conflicts of interest, the pre-trained weights and industrial datasets used in this study are not open-sourced.  
-> Researchers may use this repository to conduct replication experiments on their own industrial datasets.
+本项目包含 YOLOv5 版本，也提供了可适配 Ultralytics YOLOv5、YOLOv8、YOLO11 风格配置的实现。
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-supported-red)
@@ -16,18 +12,18 @@ This repository includes a YOLOv5 implementation and an Ultralytics-compatible i
 ![ONNX](https://img.shields.io/badge/ONNX-supported-orange)
 ![RKNN](https://img.shields.io/badge/RKNN-RK3566%20%7C%20RK3588-purple)
 
-## Highlights
+## 特性
 
-- **Dual-Path Detection Head**: decouples classification-oriented and localization-oriented features.
-- **FGDH**: improves fine-grained classification with dual convolution streams and compact bilinear fusion.
-- **VFM Feature Guider**: uses classification and regression teacher encoders during training only.
-- **Branch-Specific VFM Loss**: adds semantic relation guidance and foreground-aware regression guidance.
-- **Ultralytics Support**: works with YOLOv5, YOLOv8, and YOLO11 style configs.
-- **Clean Export**: teacher encoders are not used during inference, ONNX export, or RKNN deployment.
+- **Dual-Path Detection Head**：在检测头中解耦分类特征和定位特征。
+- **FGDH**：通过双卷积分支和紧凑双线性融合增强细粒度分类能力。
+- **VFM Feature Guider**：训练阶段使用分类 teacher 和回归 teacher 进行特征指导。
+- **Branch-Specific VFM Loss**：支持分类语义关系蒸馏和前景加权回归蒸馏。
+- **Ultralytics 适配**：支持 YOLOv5、YOLOv8、YOLO11 风格配置。
+- **部署友好**：teacher 只在训练阶段使用，导出和推理模型不包含 teacher 编码器。
 
-## Model Variants
+## 模型配置
 
-YOLOv5 configs:
+YOLOv5 配置：
 
 `	ext
 models/FGDCn-dualpath.yaml
@@ -36,7 +32,7 @@ models/FGDCn-fgdc-vfm-placeholder.yaml
 models/FGDCn-fgdc-vfm-branchloss.yaml
 `
 
-Ultralytics configs:
+Ultralytics 配置：
 
 `	ext
 ultralytics-main/ultralytics/cfg/models/fgdc/yolov5-fgdc.yaml
@@ -47,9 +43,9 @@ ultralytics-main/ultralytics/cfg/models/fgdc/yolo11-fgdc-vfm.yaml
 ultralytics-main/ultralytics/cfg/models/fgdc/yolo11-fgdc-vfm-branchloss.yaml
 `
 
-The VFM teachers are training-time helpers. Exported ONNX and RKNN models keep only the lightweight detector.
+VFM teacher 仅用于训练。导出的 ONNX 和 RKNN 模型只保留轻量检测器。
 
-## Installation
+## 环境安装
 
 `ash
 git clone your_repo_url
@@ -58,16 +54,16 @@ pip install -r requirements.txt
 pip install timm onnx onnxruntime onnxsim pytest
 `
 
-For the Ultralytics version:
+Ultralytics 版本：
 
 `ash
 cd ultralytics-main
 pip install -e .
 `
 
-## Dataset Format
+## 数据集格式
 
-Use the standard YOLO format:
+使用标准 YOLO 数据格式：
 
 `	ext
 your_dataset/
@@ -77,7 +73,7 @@ your_dataset/
 └── val/labels
 `
 
-Example dataset yaml:
+数据集 yaml 示例：
 
 `yaml
 path: datasets/your_dataset
@@ -92,9 +88,9 @@ names:
   4: defect_4
 `
 
-## Training
+## 训练
 
-YOLOv5 FGDC-Net with branch-specific VFM loss:
+YOLOv5 FGDC-Net，使用 Branch-Specific VFM Loss：
 
 `ash
 python train.py \
@@ -110,7 +106,7 @@ python train.py \
   --vfm-imgsz 224
 `
 
-Dual-Path + FGDH only:
+只使用 Dual-Path + FGDH：
 
 `ash
 python train.py \
@@ -123,7 +119,7 @@ python train.py \
   --name your_dualpath_exp
 `
 
-Ultralytics YOLO11 FGDC-Net:
+Ultralytics YOLO11 FGDC-Net：
 
 `ash
 cd ultralytics-main
@@ -137,16 +133,16 @@ yolo detect train \
   name=your_fgdc_yolo11_exp
 `
 
-## VFM Guidance
+## VFM 损失
 
-MSE guidance:
+普通 MSE 蒸馏：
 
 `yaml
 VFM_cls_loss: MSE
 VFM_reg_loss: MSE
 `
 
-Branch-specific guidance:
+分支特定蒸馏：
 
 `yaml
 use_vfm_guider: true
@@ -157,13 +153,13 @@ vfm_beta: 0.5
 vfm_max_tokens: 256
 `
 
-Implementation:
+实现位置：
 
 `	ext
 losses/vfm_guidance_loss.py
 `
 
-Training logs include:
+训练日志会记录：
 
 `	ext
 loss_cls_cos
@@ -173,9 +169,9 @@ loss_reg_att
 loss_vfm
 `
 
-## Export
+## 导出
 
-ONNX:
+ONNX：
 
 `ash
 python export.py \
@@ -187,7 +183,7 @@ python export.py \
   --opset 18
 `
 
-Simplify ONNX:
+ONNX 简化：
 
 `ash
 python -m onnxsim \
@@ -195,7 +191,7 @@ python -m onnxsim \
   runs/train/your_exp/weights/best_sim.onnx
 `
 
-RKNN FP16:
+RKNN FP16：
 
 `ash
 python tools/export_rknn.py \
@@ -206,7 +202,7 @@ python tools/export_rknn.py \
   --output-dir runs/train/your_exp/weights
 `
 
-RKNN INT8:
+RKNN INT8：
 
 `ash
 python tools/export_rknn.py \
@@ -219,13 +215,13 @@ python tools/export_rknn.py \
   --output-dir runs/train/your_exp/weights
 `
 
-## Notes
+## 注意事项
 
-- Teacher encoders are used only during training.
-- Inference, ONNX export, and RKNN export do not load DINO, ViT, or Swin teachers.
-- est.pt can be larger than the exported model because it may include training-time states.
-- Start RKNN deployment with FP16, then evaluate INT8 with a representative calibration set.
+- teacher 编码器只在训练阶段使用。
+- 推理、ONNX 导出、RKNN 导出不会加载 DINO、ViT 或 Swin teacher。
+- est.pt 可能包含训练阶段状态，体积可能大于导出的 ONNX/RKNN 模型。
+- RKNN 部署建议先测试 FP16，再使用代表性校准集评估 INT8。
 
-## Acknowledgements
+## 致谢
 
-This project builds on PyTorch, YOLOv5, Ultralytics YOLO, ONNX, RKNN Toolkit, and timm.
+本项目基于 PyTorch、YOLOv5、Ultralytics YOLO、ONNX、RKNN Toolkit 和 timm 构建。

@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from losses.vfm_guidance_loss import DualPathVFMGuidanceLoss
+
 
 class DualPathVFMGuider(nn.Module):
     """Dual-path visual foundation model feature guider.
@@ -45,6 +47,11 @@ class DualPathVFMGuider(nn.Module):
         enable_lora=False,
         lambda_cls=1.0,
         lambda_reg=1.0,
+        cls_loss="MSE",
+        reg_loss="MSE",
+        vfm_alpha=0.5,
+        vfm_beta=0.5,
+        vfm_max_tokens=256,
         freeze_teachers=True,
     ):
         super().__init__()
@@ -57,8 +64,28 @@ class DualPathVFMGuider(nn.Module):
         self.enable_lora = enable_lora
         self.lambda_cls = lambda_cls
         self.lambda_reg = lambda_reg
+        self.cls_loss_name = self._normalize_loss_name(cls_loss)
+        self.reg_loss_name = self._normalize_loss_name(reg_loss)
+        self.use_branch_specific_loss = self.cls_loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"} and (
+            self.reg_loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"}
+        )
+        self.branch_guidance_loss = (
+            DualPathVFMGuidanceLoss(
+                lambda_cls=lambda_cls,
+                lambda_reg=lambda_reg,
+                alpha=vfm_alpha,
+                beta=vfm_beta,
+                max_tokens=vfm_max_tokens,
+            )
+            if self.use_branch_specific_loss
+            else None
+        )
         self.last_cls_loss = None
         self.last_reg_loss = None
+        self.last_cls_cos_loss = None
+        self.last_cls_rel_loss = None
+        self.last_reg_fg_loss = None
+        self.last_reg_att_loss = None
 
         # Project detector branch features into the shared VFM distillation space.
         self.cls_proj = nn.Conv2d(cls_channels, distill_dim, 1)
@@ -99,7 +126,7 @@ class DualPathVFMGuider(nn.Module):
         if reg_weight_path:
             self.reg_weight_path = Path(reg_weight_path)
 
-    def forward(self, F_cls, F_reg, teacher_inputs=None, return_teacher=False):
+    def forward(self, F_cls, F_reg, teacher_inputs=None, fg_mask=None, return_teacher=False):
         """Compute dual-path VFM distillation loss.
 
         Args:
@@ -140,7 +167,7 @@ class DualPathVFMGuider(nn.Module):
             else:
                 self.cls_teacher_proj = self.cls_teacher_proj.to(device=F_cls_proj.device, dtype=F_cls_proj.dtype)
             T_cls = self.cls_teacher_proj(T_cls)
-            L_cls_vfm = F.mse_loss(F_cls_proj, T_cls.detach())
+            L_cls_vfm = self._distill_loss(F_cls_proj, T_cls.detach(), self.cls_loss_name)
         elif self.cls_teacher is not None:
             cls_input = self._teacher_input(teacher_inputs, "cls", F_cls)
             if torch.is_tensor(cls_input):
@@ -150,7 +177,7 @@ class DualPathVFMGuider(nn.Module):
             T_cls = T_cls.to(device=F_cls_proj.device, dtype=F_cls_proj.dtype)
             self.cls_teacher_proj = self.cls_teacher_proj.to(device=F_cls_proj.device, dtype=F_cls_proj.dtype)
             T_cls = self.cls_teacher_proj(T_cls)
-            L_cls_vfm = F.mse_loss(F_cls_proj, T_cls.detach())
+            L_cls_vfm = self._distill_loss(F_cls_proj, T_cls.detach(), self.cls_loss_name)
 
         # Swin localization teacher guides regression-oriented features.
         reg_precomputed = self._teacher_input(teacher_inputs, "reg_feature", None)
@@ -166,7 +193,7 @@ class DualPathVFMGuider(nn.Module):
             else:
                 self.reg_teacher_proj = self.reg_teacher_proj.to(device=F_reg_proj.device, dtype=F_reg_proj.dtype)
             T_reg = self.reg_teacher_proj(T_reg)
-            L_reg_vfm = F.mse_loss(F_reg_proj, T_reg.detach())
+            L_reg_vfm = self._distill_loss(F_reg_proj, T_reg.detach(), self.reg_loss_name)
         elif self.reg_teacher is not None:
             reg_input = self._teacher_input(teacher_inputs, "reg", F_reg)
             if torch.is_tensor(reg_input):
@@ -176,9 +203,23 @@ class DualPathVFMGuider(nn.Module):
             T_reg = T_reg.to(device=F_reg_proj.device, dtype=F_reg_proj.dtype)
             self.reg_teacher_proj = self.reg_teacher_proj.to(device=F_reg_proj.device, dtype=F_reg_proj.dtype)
             T_reg = self.reg_teacher_proj(T_reg)
-            L_reg_vfm = F.mse_loss(F_reg_proj, T_reg.detach())
+            L_reg_vfm = self._distill_loss(F_reg_proj, T_reg.detach(), self.reg_loss_name)
 
-        loss = self.lambda_cls * L_cls_vfm + self.lambda_reg * L_reg_vfm
+        if self.branch_guidance_loss is not None and T_cls is not None and T_reg is not None:
+            loss_dict = self.branch_guidance_loss(F_cls_proj, F_reg_proj, T_cls, T_reg, fg_mask=fg_mask)
+            loss = loss_dict["loss_vfm"]
+            L_cls_vfm = loss_dict["loss_cls_cos"] + self.branch_guidance_loss.alpha * loss_dict["loss_cls_rel"]
+            L_reg_vfm = loss_dict["loss_reg_fg"] + self.branch_guidance_loss.beta * loss_dict["loss_reg_att"]
+            self.last_cls_cos_loss = loss_dict["loss_cls_cos"].detach()
+            self.last_cls_rel_loss = loss_dict["loss_cls_rel"].detach()
+            self.last_reg_fg_loss = loss_dict["loss_reg_fg"].detach()
+            self.last_reg_att_loss = loss_dict["loss_reg_att"].detach()
+        else:
+            loss = self.lambda_cls * L_cls_vfm + self.lambda_reg * L_reg_vfm
+            self.last_cls_cos_loss = None
+            self.last_cls_rel_loss = None
+            self.last_reg_fg_loss = None
+            self.last_reg_att_loss = None
         self.last_cls_loss = L_cls_vfm.detach()
         self.last_reg_loss = L_reg_vfm.detach()
 
@@ -191,7 +232,29 @@ class DualPathVFMGuider(nn.Module):
             "T_reg": T_reg,
             "L_cls_vfm": L_cls_vfm.detach(),
             "L_reg_vfm": L_reg_vfm.detach(),
+            "L_cls_cos": self.last_cls_cos_loss,
+            "L_cls_rel": self.last_cls_rel_loss,
+            "L_reg_fg": self.last_reg_fg_loss,
+            "L_reg_att": self.last_reg_att_loss,
         }
+
+    @staticmethod
+    def _normalize_loss_name(name):
+        """Normalize yaml-configured VFM loss names."""
+        return str(name or "MSE").replace("-", "_").lower()
+
+    @staticmethod
+    def _distill_loss(pred, target, loss_name):
+        """Dispatch VFM distillation loss by name. Extend here for new loss methods."""
+        if loss_name in {"mse", "mse_loss", "l2"}:
+            return F.mse_loss(pred, target)
+        if loss_name in {"l1", "mae"}:
+            return F.l1_loss(pred, target)
+        if loss_name in {"smooth_l1", "smoothl1", "huber"}:
+            return F.smooth_l1_loss(pred, target)
+        if loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"}:
+            return pred.sum() * 0.0
+        raise ValueError(f"Unsupported VFM loss: {loss_name}")
 
     def _configure_teacher(self, teacher, freeze_teachers):
         """Set teacher trainability; LoRA parameters can remain trainable."""

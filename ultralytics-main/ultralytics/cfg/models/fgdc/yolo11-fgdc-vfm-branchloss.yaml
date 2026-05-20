@@ -51,5 +51,5 @@ head:
   - [[-1, 10], 1, Concat, [1]] # cat head P5
   - [-1, 2, C3k2, [1024, True]] # 22 (P5/32-large)
 
-  - [[16, 19, 22], 1, FGDCDetect, [nc, {use_fgdh: true, fgdh_compact_dim: 128, use_vfm: true, vfm_distill_dim: 128, vfm_lambda_cls: 1.0, vfm_lambda_reg: 1.0, VFM_cls_loss: MSE, VFM_reg_loss: MSE, vfm_imgsz: 224, vfm_cls_weights: "D:/FGDCNetss/pre-train/vit_base_teacher_best.pt", vfm_reg_weights: "D:/FGDCNetss/pre-train/Swin_base_model_20ep.pth"}]] # FGDCDetect(P3, P4, P5)
+  - [[16, 19, 22], 1, FGDCDetect, [nc, {use_fgdh: true, fgdh_compact_dim: 128, use_vfm: true, vfm_distill_dim: 128, vfm_lambda_cls: 1.0, vfm_lambda_reg: 1.0, VFM_cls_loss: BranchSpecific, VFM_reg_loss: BranchSpecific, vfm_alpha: 0.5, vfm_beta: 0.5, vfm_max_tokens: 256, vfm_imgsz: 224, vfm_cls_weights: "pre-train/your_cls_teacher.pt", vfm_reg_weights: "pre-train/your_reg_teacher.pth"}]] # FGDCDetect(P3, P4, P5)
 

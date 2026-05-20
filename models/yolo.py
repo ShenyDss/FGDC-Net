@@ -270,7 +270,7 @@ class DetectionModel(BaseModel):
         if augment:
             return self._forward_augment(x)  # augmented inference, None
         m = self.model[-1]
-        if self.training and isinstance(m, DualPathDetect) and getattr(m, "use_vfm", False):
+        if self.training and isinstance(m, DualPathDetect) and getattr(m, "use_vfm_guider", getattr(m, "use_vfm", False)):
             m.set_vfm_teacher_inputs(x)
         return self._forward_once(x, profile, visualize)  # single-scale inference, train
 
@@ -462,10 +462,15 @@ def parse_model(d, ch):
                         head_kwargs.get("min_proj_channels", 16),
                         head_kwargs.get("use_fgdh", False),
                         head_kwargs.get("fgdh_compact_dim", 256),
-                        head_kwargs.get("use_vfm", False),
+                        head_kwargs.get("use_vfm_guider", head_kwargs.get("use_vfm", False)),
                         head_kwargs.get("vfm_distill_dim", 256),
                         head_kwargs.get("vfm_lambda_cls", 1.0),
                         head_kwargs.get("vfm_lambda_reg", 1.0),
+                        head_kwargs.get("VFM_cls_loss", "MSE"),
+                        head_kwargs.get("VFM_reg_loss", "MSE"),
+                        head_kwargs.get("vfm_alpha", 0.5),
+                        head_kwargs.get("vfm_beta", 0.5),
+                        head_kwargs.get("vfm_max_tokens", 256),
                     ]
                 )
         elif m is Contract:

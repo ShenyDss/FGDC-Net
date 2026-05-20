@@ -226,7 +226,9 @@ def train(hyp, opt, device, callbacks):
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get("anchors")).to(device)  # create
     detect_head = de_parallel(model).model[-1]
-    if getattr(detect_head, "use_vfm", False) and (opt.vfm_cls_weights or opt.vfm_reg_weights):
+    if getattr(detect_head, "use_vfm_guider", getattr(detect_head, "use_vfm", False)) and (
+        opt.vfm_cls_weights or opt.vfm_reg_weights
+    ):
         detect_head.set_vfm_weight_paths(opt.vfm_cls_weights, opt.vfm_reg_weights)
         cls_teacher, reg_teacher = build_vfm_teachers(
             cls_weights=opt.vfm_cls_weights or None,
@@ -393,13 +395,25 @@ def train(hyp, opt, device, callbacks):
         # b = int(random.uniform(0.25 * imgsz, 0.75 * imgsz + gs) // gs * gs)
         # dataset.mosaic_border = [b - imgsz, -b]  # height, width borders
 
-        mloss = torch.zeros(5, device=device)  # mean losses
+        mloss = torch.zeros(8, device=device)  # mean losses
         if RANK != -1:
             train_loader.sampler.set_epoch(epoch)
         pbar = enumerate(train_loader)
         LOGGER.info(
-            ("\n" + "%11s" * 9)
-            % ("Epoch", "GPU_mem", "box_loss", "obj_loss", "cls_loss", "vfm_cls", "vfm_reg", "Instances", "Size")
+            ("\n" + "%11s" * 11)
+            % (
+                "Epoch",
+                "GPU_mem",
+                "box_loss",
+                "obj_loss",
+                "cls_loss",
+                "cls_cos",
+                "cls_rel",
+                "reg_fg",
+                "reg_att",
+                "vfm",
+                "Size",
+            )
         )
         if RANK in {-1, 0}:
             pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT)  # progress bar
@@ -430,18 +444,26 @@ def train(hyp, opt, device, callbacks):
 
             # Forward
             with torch.cuda.amp.autocast(amp):
-                pred = model(imgs)  # forward
-                loss, loss_items = compute_loss(pred, targets.to(device))  # loss scaled by batch_size
+                targets_device = targets.to(device)
                 detect_head = de_parallel(model).model[-1]
+                if getattr(detect_head, "use_vfm_guider", getattr(detect_head, "use_vfm", False)):
+                    detect_head.set_vfm_targets(targets_device)
+                pred = model(imgs)  # forward
+                loss, loss_items = compute_loss(pred, targets_device)  # loss scaled by batch_size
                 vfm_loss = getattr(detect_head, "vfm_loss", None)
-                vfm_cls_loss = getattr(detect_head, "vfm_cls_loss", None)
-                vfm_reg_loss = getattr(detect_head, "vfm_reg_loss", None)
+                vfm_cls_cos_loss = getattr(detect_head, "vfm_cls_cos_loss", None)
+                vfm_cls_rel_loss = getattr(detect_head, "vfm_cls_rel_loss", None)
+                vfm_reg_fg_loss = getattr(detect_head, "vfm_reg_fg_loss", None)
+                vfm_reg_att_loss = getattr(detect_head, "vfm_reg_att_loss", None)
                 if vfm_loss is not None:
                     loss += vfm_loss
                 vfm_items = torch.stack(
                     (
-                        vfm_cls_loss if vfm_cls_loss is not None else loss_items.new_zeros(()),
-                        vfm_reg_loss if vfm_reg_loss is not None else loss_items.new_zeros(()),
+                        vfm_cls_cos_loss if vfm_cls_cos_loss is not None else loss_items.new_zeros(()),
+                        vfm_cls_rel_loss if vfm_cls_rel_loss is not None else loss_items.new_zeros(()),
+                        vfm_reg_fg_loss if vfm_reg_fg_loss is not None else loss_items.new_zeros(()),
+                        vfm_reg_att_loss if vfm_reg_att_loss is not None else loss_items.new_zeros(()),
+                        vfm_loss.detach() if vfm_loss is not None else loss_items.new_zeros(()),
                     )
                 )
                 loss_items = torch.cat((loss_items, vfm_items))
@@ -469,8 +491,8 @@ def train(hyp, opt, device, callbacks):
                 mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
                 mem = f"{torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0:.3g}G"  # (GB)
                 pbar.set_description(
-                    ("%11s" * 2 + "%11.4g" * 7)
-                    % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], imgs.shape[-1])
+                    ("%11s" * 2 + "%11.4g" * 9)
+                    % (f"{epoch}/{epochs - 1}", mem, *mloss, imgs.shape[-1])
                 )
                 callbacks.run("on_train_batch_end", model, ni, imgs, targets, paths, list(mloss))
                 if callbacks.stop_training:

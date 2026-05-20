@@ -61,6 +61,8 @@ head: [
           vfm_distill_dim: 128,
           vfm_lambda_cls: 1.0,
           vfm_lambda_reg: 1.0,
+          VFM_cls_loss: MSE,
+          VFM_reg_loss: MSE,
         },
       ],
     ], # replaced by DualPathDetect when head_type=dual_path

@@ -19,6 +19,7 @@ import torch.nn.functional as F
 
 from .conv import Conv, DWConv
 from .head import Detect
+from losses.vfm_guidance_loss import DualPathVFMGuidanceLoss
 
 
 class ChannelImportancePartition(nn.Module):
@@ -96,10 +97,31 @@ class DualPathVFMGuider(nn.Module):
         teacher_reg_channels: int | None = None,
         lambda_cls: float = 1.0,
         lambda_reg: float = 1.0,
+        cls_loss: str = "MSE",
+        reg_loss: str = "MSE",
+        vfm_alpha: float = 0.5,
+        vfm_beta: float = 0.5,
+        vfm_max_tokens: int = 256,
     ):
         super().__init__()
         self.lambda_cls = lambda_cls
         self.lambda_reg = lambda_reg
+        self.cls_loss_name = self._normalize_loss_name(cls_loss)
+        self.reg_loss_name = self._normalize_loss_name(reg_loss)
+        self.use_branch_specific_loss = self.cls_loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"} and (
+            self.reg_loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"}
+        )
+        self.branch_guidance_loss = (
+            DualPathVFMGuidanceLoss(
+                lambda_cls=lambda_cls,
+                lambda_reg=lambda_reg,
+                alpha=vfm_alpha,
+                beta=vfm_beta,
+                max_tokens=vfm_max_tokens,
+            )
+            if self.use_branch_specific_loss
+            else None
+        )
         self.cls_proj = nn.Conv2d(c_cls, distill_dim, 1)
         self.reg_proj = nn.Conv2d(c_reg, distill_dim, 1)
         self.teacher_cls_proj = (
@@ -110,6 +132,22 @@ class DualPathVFMGuider(nn.Module):
         )
         self.last_cls_loss = None
         self.last_reg_loss = None
+
+    @staticmethod
+    def _normalize_loss_name(name: str) -> str:
+        """Normalize yaml-configured VFM loss names."""
+        return str(name or "MSE").replace("-", "_").lower()
+
+    @staticmethod
+    def _distill_loss(pred: torch.Tensor, target: torch.Tensor, loss_name: str) -> torch.Tensor:
+        """Dispatch VFM distillation loss by name. Extend here for new loss methods."""
+        if loss_name in {"mse", "mse_loss", "l2"}:
+            return F.mse_loss(pred, target)
+        if loss_name in {"l1", "mae"}:
+            return F.l1_loss(pred, target)
+        if loss_name in {"smooth_l1", "smoothl1", "huber"}:
+            return F.smooth_l1_loss(pred, target)
+        raise ValueError(f"Unsupported VFM loss: {loss_name}")
 
     def forward(
         self,
@@ -134,8 +172,13 @@ class DualPathVFMGuider(nn.Module):
         t_reg = self.teacher_reg_proj(t_reg)
         t_cls = F.interpolate(t_cls, size=f_cls.shape[-2:], mode="bilinear", align_corners=False)
         t_reg = F.interpolate(t_reg, size=f_reg.shape[-2:], mode="bilinear", align_corners=False)
-        self.last_cls_loss = F.mse_loss(f_cls, t_cls)
-        self.last_reg_loss = F.mse_loss(f_reg, t_reg)
+        if self.branch_guidance_loss is not None:
+            loss_dict = self.branch_guidance_loss(f_cls, f_reg, t_cls, t_reg, fg_mask=None)
+            self.last_cls_loss = loss_dict["loss_cls_cos"] + self.branch_guidance_loss.alpha * loss_dict["loss_cls_rel"]
+            self.last_reg_loss = loss_dict["loss_reg_fg"] + self.branch_guidance_loss.beta * loss_dict["loss_reg_att"]
+            return loss_dict["loss_vfm"]
+        self.last_cls_loss = self._distill_loss(f_cls, t_cls, self.cls_loss_name)
+        self.last_reg_loss = self._distill_loss(f_reg, t_reg, self.reg_loss_name)
         return self.lambda_cls * self.last_cls_loss + self.lambda_reg * self.last_reg_loss
 
 
@@ -161,6 +204,11 @@ class FGDCDetect(Detect):
         vfm_distill_dim: int = 128,
         vfm_lambda_cls: float = 1.0,
         vfm_lambda_reg: float = 1.0,
+        VFM_cls_loss: str = "MSE",
+        VFM_reg_loss: str = "MSE",
+        vfm_alpha: float = 0.5,
+        vfm_beta: float = 0.5,
+        vfm_max_tokens: int = 256,
         vfm_cls_weights: str | None = None,
         vfm_reg_weights: str | None = None,
         vfm_imgsz: int = 224,
@@ -189,6 +237,11 @@ class FGDCDetect(Detect):
             vfm_distill_dim = opts.pop("vfm_distill_dim", vfm_distill_dim)
             vfm_lambda_cls = opts.pop("vfm_lambda_cls", vfm_lambda_cls)
             vfm_lambda_reg = opts.pop("vfm_lambda_reg", vfm_lambda_reg)
+            VFM_cls_loss = opts.pop("VFM_cls_loss", VFM_cls_loss)
+            VFM_reg_loss = opts.pop("VFM_reg_loss", VFM_reg_loss)
+            vfm_alpha = opts.pop("vfm_alpha", vfm_alpha)
+            vfm_beta = opts.pop("vfm_beta", vfm_beta)
+            vfm_max_tokens = opts.pop("vfm_max_tokens", vfm_max_tokens)
             vfm_cls_weights = opts.pop("vfm_cls_weights", vfm_cls_weights)
             vfm_reg_weights = opts.pop("vfm_reg_weights", vfm_reg_weights)
             vfm_imgsz = opts.pop("vfm_imgsz", vfm_imgsz)
@@ -235,6 +288,11 @@ class FGDCDetect(Detect):
                     distill_dim=vfm_distill_dim,
                     lambda_cls=vfm_lambda_cls,
                     lambda_reg=vfm_lambda_reg,
+                    cls_loss=VFM_cls_loss,
+                    reg_loss=VFM_reg_loss,
+                    vfm_alpha=vfm_alpha,
+                    vfm_beta=vfm_beta,
+                    vfm_max_tokens=vfm_max_tokens,
                 )
                 for p in proj_ch
             )

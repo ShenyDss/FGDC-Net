@@ -56,6 +56,11 @@ class DualPathDetect(nn.Module):
         vfm_distill_dim=256,
         vfm_lambda_cls=1.0,
         vfm_lambda_reg=1.0,
+        VFM_cls_loss="MSE",
+        VFM_reg_loss="MSE",
+        vfm_alpha=0.5,
+        vfm_beta=0.5,
+        vfm_max_tokens=256,
     ):
         super().__init__()
         self.nc = nc
@@ -68,11 +73,17 @@ class DualPathDetect(nn.Module):
         self.inplace = inplace
         self.use_fgdh = use_fgdh
         self.use_vfm = use_vfm
+        self.use_vfm_guider = use_vfm
         self.vfm_loss = None
         self.vfm_cls_loss = None
         self.vfm_reg_loss = None
+        self.vfm_cls_cos_loss = None
+        self.vfm_cls_rel_loss = None
+        self.vfm_reg_fg_loss = None
+        self.vfm_reg_att_loss = None
         self.vfm_debug = None
         self.vfm_teacher_inputs = None
+        self.vfm_targets = None
 
         proj_ch = [max(int(c * proj_ratio), min_proj_channels) for c in ch]
         self.proj = nn.ModuleList(Conv(c1, c2, 1, 1) for c1, c2 in zip(ch, proj_ch))
@@ -107,6 +118,11 @@ class DualPathDetect(nn.Module):
                     reg_teacher_channels=vfm_reg_teacher_channels[i],
                     lambda_cls=vfm_lambda_cls,
                     lambda_reg=vfm_lambda_reg,
+                    cls_loss=VFM_cls_loss,
+                    reg_loss=VFM_reg_loss,
+                    vfm_alpha=vfm_alpha,
+                    vfm_beta=vfm_beta,
+                    vfm_max_tokens=vfm_max_tokens,
                 )
                 for i, c in enumerate(proj_ch)
             )
@@ -120,19 +136,37 @@ class DualPathDetect(nn.Module):
         vfm_losses = []
         vfm_cls_losses = []
         vfm_reg_losses = []
+        vfm_cls_cos_losses = []
+        vfm_cls_rel_losses = []
+        vfm_reg_fg_losses = []
+        vfm_reg_att_losses = []
         self.vfm_loss = None
         self.vfm_cls_loss = None
         self.vfm_reg_loss = None
+        self.vfm_cls_cos_loss = None
+        self.vfm_cls_rel_loss = None
+        self.vfm_reg_fg_loss = None
+        self.vfm_reg_att_loss = None
         self.vfm_debug = None
         teacher_features = self._encode_vfm_teachers()
         for i in range(self.nl):
             feat = self.proj[i](x[i])
             cls_feat, reg_feat = self.partition[i](feat)
             if self.training and self.use_vfm:
-                vfm_loss = self.vfm_guiders[i](cls_feat, reg_feat, teacher_inputs=self._vfm_features_for_scale(teacher_features, i))
+                fg_mask = self._build_vfm_fg_mask(self.vfm_targets, reg_feat.shape[0], reg_feat.shape[-2:], reg_feat.device, reg_feat.dtype)
+                vfm_loss = self.vfm_guiders[i](
+                    cls_feat,
+                    reg_feat,
+                    teacher_inputs=self._vfm_features_for_scale(teacher_features, i),
+                    fg_mask=fg_mask,
+                )
                 vfm_losses.append(vfm_loss)
                 vfm_cls_losses.append(self.vfm_guiders[i].last_cls_loss)
                 vfm_reg_losses.append(self.vfm_guiders[i].last_reg_loss)
+                vfm_cls_cos_losses.append(self._loss_or_zero(self.vfm_guiders[i].last_cls_cos_loss, vfm_loss))
+                vfm_cls_rel_losses.append(self._loss_or_zero(self.vfm_guiders[i].last_cls_rel_loss, vfm_loss))
+                vfm_reg_fg_losses.append(self._loss_or_zero(self.vfm_guiders[i].last_reg_fg_loss, vfm_loss))
+                vfm_reg_att_losses.append(self._loss_or_zero(self.vfm_guiders[i].last_reg_att_loss, vfm_loss))
             reg_feat = self.reg_stem[i](reg_feat)
 
             reg = self.reg_pred[i](reg_feat).view(x[i].shape[0], self.na, 4, x[i].shape[2], x[i].shape[3])
@@ -157,6 +191,10 @@ class DualPathDetect(nn.Module):
             self.vfm_loss = torch.stack(vfm_losses).mean()
             self.vfm_cls_loss = torch.stack(vfm_cls_losses).mean()
             self.vfm_reg_loss = torch.stack(vfm_reg_losses).mean()
+            self.vfm_cls_cos_loss = torch.stack(vfm_cls_cos_losses).mean()
+            self.vfm_cls_rel_loss = torch.stack(vfm_cls_rel_losses).mean()
+            self.vfm_reg_fg_loss = torch.stack(vfm_reg_fg_losses).mean()
+            self.vfm_reg_att_loss = torch.stack(vfm_reg_att_losses).mean()
         return x if self.training else (torch.cat(z, 1),) if self.export else (torch.cat(z, 1), x)
 
     def __getstate__(self):
@@ -165,8 +203,13 @@ class DualPathDetect(nn.Module):
         state["vfm_loss"] = None
         state["vfm_cls_loss"] = None
         state["vfm_reg_loss"] = None
+        state["vfm_cls_cos_loss"] = None
+        state["vfm_cls_rel_loss"] = None
+        state["vfm_reg_fg_loss"] = None
+        state["vfm_reg_att_loss"] = None
         state["vfm_debug"] = None
         state["vfm_teacher_inputs"] = None
+        state["vfm_targets"] = None
         return state
 
     def initialize_biases(self, cf=None):
@@ -199,6 +242,36 @@ class DualPathDetect(nn.Module):
     def set_vfm_teacher_inputs(self, images=None):
         """Set image batch used by VFM teachers during the next forward."""
         self.vfm_teacher_inputs = images
+
+    def set_vfm_targets(self, targets=None):
+        """Set YOLO-format GT targets used to build foreground masks for VFM guidance."""
+        self.vfm_targets = targets
+
+    @staticmethod
+    def _loss_or_zero(loss_value, ref):
+        """Return a scalar loss or a differentiable zero matching ref."""
+        return loss_value if loss_value is not None else ref.new_zeros(())
+
+    @staticmethod
+    def _build_vfm_fg_mask(targets, batch_size, hw, device, dtype):
+        """Map normalized YOLO targets [image, cls, x, y, w, h] to a Bx1xHxW foreground mask."""
+        h, w = hw
+        mask = torch.zeros(batch_size, 1, h, w, device=device, dtype=dtype)
+        if targets is None or targets.numel() == 0:
+            return mask
+        targets = targets.to(device=device)
+        for target in targets:
+            b = int(target[0].item())
+            if b < 0 or b >= batch_size:
+                continue
+            x, y, bw, bh = target[2:6]
+            x1 = torch.clamp(((x - bw / 2) * w).floor(), 0, w - 1).long()
+            y1 = torch.clamp(((y - bh / 2) * h).floor(), 0, h - 1).long()
+            x2 = torch.clamp(((x + bw / 2) * w).ceil(), 1, w).long()
+            y2 = torch.clamp(((y + bh / 2) * h).ceil(), 1, h).long()
+            if x2 > x1 and y2 > y1:
+                mask[b, 0, y1:y2, x1:x2] = 1
+        return mask
 
     def set_vfm_weight_paths(self, cls_weight_path=None, reg_weight_path=None):
         """Store VFM teacher checkpoint paths on all guider scales."""

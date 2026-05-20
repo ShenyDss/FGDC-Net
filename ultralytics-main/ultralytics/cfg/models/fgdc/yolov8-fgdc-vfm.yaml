@@ -47,6 +47,6 @@ head:
   - [[-1, 9], 1, Concat, [1]] # cat head P5
   - [-1, 3, C2f, [1024]] # 21 (P5/32-large)
 
-  - [[15, 18, 21], 1, FGDCDetect, [nc, {use_fgdh: true, fgdh_compact_dim: 128, use_vfm: true, vfm_distill_dim: 128, vfm_lambda_cls: 1.0, vfm_lambda_reg: 1.0}]] # FGDCDetect(P3, P4, P5)
+  - [[15, 18, 21], 1, FGDCDetect, [nc, {use_fgdh: true, fgdh_compact_dim: 128, use_vfm: true, vfm_distill_dim: 128, vfm_lambda_cls: 1.0, vfm_lambda_reg: 1.0, VFM_cls_loss: MSE, VFM_reg_loss: MSE}]] # FGDCDetect(P3, P4, P5)
 
 
