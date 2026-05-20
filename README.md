@@ -6,15 +6,14 @@ FGDC-Net is a YOLO-based detector for fine-grained industrial defect inspection.
 
 This repository includes a YOLOv5 implementation and an Ultralytics-compatible implementation for YOLOv5, YOLOv8, and YOLO11 style models.
 
-> **Note**  
-> Due to privacy restrictions and potential conflicts of interest, the pre-trained weights and industrial datasets used in this study are not open-sourced.  
-> Researchers may use this repository to conduct replication experiments on their own industrial datasets.
-
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-supported-red)
 ![YOLO](https://img.shields.io/badge/YOLO-v5%20%7C%20v8%20%7C%20v11-green)
 ![ONNX](https://img.shields.io/badge/ONNX-supported-orange)
 ![RKNN](https://img.shields.io/badge/RKNN-RK3566%20%7C%20RK3588-purple)
+
+> **Note**
+> Pre-trained teacher weights and industrial datasets are not included. Use your own data and teacher checkpoints for reproduction or further research.
 
 ## Highlights
 
@@ -29,57 +28,57 @@ This repository includes a YOLOv5 implementation and an Ultralytics-compatible i
 
 YOLOv5 configs:
 
-`	ext
+```text
 models/FGDCn-dualpath.yaml
 models/FGDCn-fgdc-vfm.yaml
 models/FGDCn-fgdc-vfm-placeholder.yaml
 models/FGDCn-fgdc-vfm-branchloss.yaml
-`
+```
 
 Ultralytics configs:
 
-`	ext
+```text
 ultralytics-main/ultralytics/cfg/models/fgdc/yolov5-fgdc.yaml
 ultralytics-main/ultralytics/cfg/models/fgdc/yolov8-fgdc.yaml
 ultralytics-main/ultralytics/cfg/models/fgdc/yolov8-fgdc-vfm.yaml
 ultralytics-main/ultralytics/cfg/models/fgdc/yolo11-fgdc.yaml
 ultralytics-main/ultralytics/cfg/models/fgdc/yolo11-fgdc-vfm.yaml
 ultralytics-main/ultralytics/cfg/models/fgdc/yolo11-fgdc-vfm-branchloss.yaml
-`
+```
 
 The VFM teachers are training-time helpers. Exported ONNX and RKNN models keep only the lightweight detector.
 
 ## Installation
 
-`ash
+```bash
 git clone your_repo_url
 cd FGDCNet
 pip install -r requirements.txt
 pip install timm onnx onnxruntime onnxsim pytest
-`
+```
 
 For the Ultralytics version:
 
-`ash
+```bash
 cd ultralytics-main
 pip install -e .
-`
+```
 
 ## Dataset Format
 
 Use the standard YOLO format:
 
-`	ext
+```text
 your_dataset/
-├── train/images
-├── train/labels
-├── val/images
-└── val/labels
-`
+  train/images/
+  train/labels/
+  val/images/
+  val/labels/
+```
 
 Example dataset yaml:
 
-`yaml
+```yaml
 path: datasets/your_dataset
 train: train/images
 val: val/images
@@ -90,13 +89,13 @@ names:
   2: defect_2
   3: defect_3
   4: defect_4
-`
+```
 
 ## Training
 
 YOLOv5 FGDC-Net with branch-specific VFM loss:
 
-`ash
+```bash
 python train.py \
   --img 640 \
   --batch 4 \
@@ -108,11 +107,11 @@ python train.py \
   --vfm-cls-weights pre-train/your_cls_teacher.pt \
   --vfm-reg-weights pre-train/your_reg_teacher.pth \
   --vfm-imgsz 224
-`
+```
 
 Dual-Path + FGDH only:
 
-`ash
+```bash
 python train.py \
   --img 640 \
   --batch 4 \
@@ -121,11 +120,11 @@ python train.py \
   --cfg models/FGDCn-dualpath.yaml \
   --weights "" \
   --name your_dualpath_exp
-`
+```
 
 Ultralytics YOLO11 FGDC-Net:
 
-`ash
+```bash
 cd ultralytics-main
 
 yolo detect train \
@@ -135,49 +134,49 @@ yolo detect train \
   batch=4 \
   epochs=100 \
   name=your_fgdc_yolo11_exp
-`
+```
 
 ## VFM Guidance
 
 MSE guidance:
 
-`yaml
+```yaml
 VFM_cls_loss: MSE
 VFM_reg_loss: MSE
-`
+```
 
 Branch-specific guidance:
 
-`yaml
+```yaml
 use_vfm_guider: true
 VFM_cls_loss: BranchSpecific
 VFM_reg_loss: BranchSpecific
 vfm_alpha: 0.5
 vfm_beta: 0.5
 vfm_max_tokens: 256
-`
+```
 
 Implementation:
 
-`	ext
+```text
 losses/vfm_guidance_loss.py
-`
+```
 
 Training logs include:
 
-`	ext
+```text
 loss_cls_cos
 loss_cls_rel
 loss_reg_fg
 loss_reg_att
 loss_vfm
-`
+```
 
 ## Export
 
 ONNX:
 
-`ash
+```bash
 python export.py \
   --weights runs/train/your_exp/weights/best.pt \
   --include onnx \
@@ -185,30 +184,30 @@ python export.py \
   --batch-size 1 \
   --device cpu \
   --opset 18
-`
+```
 
 Simplify ONNX:
 
-`ash
+```bash
 python -m onnxsim \
   runs/train/your_exp/weights/best.onnx \
   runs/train/your_exp/weights/best_sim.onnx
-`
+```
 
 RKNN FP16:
 
-`ash
+```bash
 python tools/export_rknn.py \
   --onnx runs/train/your_exp/weights/best_sim.onnx \
   --platforms rk3566 rk3588 \
   --mode fp16 \
   --name your_fgdc_model \
   --output-dir runs/train/your_exp/weights
-`
+```
 
 RKNN INT8:
 
-`ash
+```bash
 python tools/export_rknn.py \
   --onnx runs/train/your_exp/weights/best_sim.onnx \
   --platforms rk3566 rk3588 \
@@ -217,13 +216,13 @@ python tools/export_rknn.py \
   --dataset-count 300 \
   --name your_fgdc_model \
   --output-dir runs/train/your_exp/weights
-`
+```
 
 ## Notes
 
 - Teacher encoders are used only during training.
 - Inference, ONNX export, and RKNN export do not load DINO, ViT, or Swin teachers.
-- est.pt can be larger than the exported model because it may include training-time states.
+- `best.pt` can be larger than the exported model because it may include training-time states.
 - Start RKNN deployment with FP16, then evaluate INT8 with a representative calibration set.
 
 ## Acknowledgements
