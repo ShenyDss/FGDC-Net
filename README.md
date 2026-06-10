@@ -18,7 +18,7 @@ This repository includes a YOLOv5 implementation and an Ultralytics-compatible i
 ## Highlights
 
 - **Dual-Path Detection Head**: decouples classification-oriented and localization-oriented features.
-- **FGDH**: improves fine-grained classification with dual convolution streams and compact bilinear fusion.
+- **FGCH**: improves fine-grained classification with dual convolution streams and compact bilinear fusion.
 - **VFM Feature Guider**: uses classification and regression teacher encoders during training only.
 - **Branch-Specific VFM Loss**: adds semantic relation guidance and foreground-aware regression guidance.
 - **Ultralytics Support**: works with YOLOv5, YOLOv8, and YOLO11 style configs.
@@ -109,7 +109,7 @@ python train.py \
   --vfm-imgsz 224
 ```
 
-Dual-Path + FGDH only:
+Dual-Path + FGCH only:
 
 ```bash
 python train.py \
