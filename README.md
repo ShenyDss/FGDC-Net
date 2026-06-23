@@ -225,6 +225,6 @@ python tools/export_rknn.py \
 - `best.pt` can be larger than the exported model because it may include training-time states.
 - Start RKNN deployment with FP16, then evaluate INT8 with a representative calibration set.
 
-## Acknowledgements
+## Acknowledgments
 
 This project builds on PyTorch, YOLOv5, Ultralytics YOLO, ONNX, RKNN Toolkit, and timm.
