@@ -57,7 +57,6 @@ This section provides the Python code used to create the Gradio interface with t
 ```python
 import gradio as gr
 import PIL.Image as Image
-
 from ultralytics import ASSETS, YOLO
 
 model = YOLO("yolo26n.pt")
@@ -131,7 +130,6 @@ Here's a minimal code snippet for reference:
 
 ```python
 import gradio as gr
-
 from ultralytics import YOLO
 
 model = YOLO("yolo26n.pt")
