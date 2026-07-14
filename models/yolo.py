@@ -270,7 +270,11 @@ class DetectionModel(BaseModel):
         if augment:
             return self._forward_augment(x)  # augmented inference, None
         m = self.model[-1]
-        if self.training and isinstance(m, DualPathDetect) and getattr(m, "use_vfm_guider", getattr(m, "use_vfm", False)):
+        if (
+            self.training
+            and isinstance(m, DualPathDetect)
+            and getattr(m, "use_vfm_guider", getattr(m, "use_vfm", False))
+        ):
             m.set_vfm_teacher_inputs(x)
         return self._forward_once(x, profile, visualize)  # single-scale inference, train
 

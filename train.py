@@ -49,8 +49,8 @@ from ultralytics.utils.patches import torch_load
 
 import val as validate  # for end-of-epoch mAP
 from models.experimental import attempt_load
-from models.yolo import Model
 from models.vfm_teachers import build_vfm_teachers
+from models.yolo import Model
 from utils.autoanchor import check_anchors
 from utils.autobatch import check_train_batch_size
 from utils.callbacks import Callbacks
@@ -237,9 +237,7 @@ def train(hyp, opt, device, callbacks):
             freeze=True,
         )
         detect_head.set_vfm_teachers(cls_teacher=cls_teacher, reg_teacher=reg_teacher)
-        LOGGER.info(
-            f"VFM teachers loaded: cls={opt.vfm_cls_weights or 'None'}, reg={opt.vfm_reg_weights or 'None'}"
-        )
+        LOGGER.info(f"VFM teachers loaded: cls={opt.vfm_cls_weights or 'None'}, reg={opt.vfm_reg_weights or 'None'}")
     amp = check_amp(model)  # check AMP
 
     # Freeze
@@ -491,8 +489,7 @@ def train(hyp, opt, device, callbacks):
                 mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
                 mem = f"{torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0:.3g}G"  # (GB)
                 pbar.set_description(
-                    ("%11s" * 2 + "%11.4g" * 9)
-                    % (f"{epoch}/{epochs - 1}", mem, *mloss, imgs.shape[-1])
+                    ("%11s" * 2 + "%11.4g" * 9) % (f"{epoch}/{epochs - 1}", mem, *mloss, imgs.shape[-1])
                 )
                 callbacks.run("on_train_batch_end", model, ni, imgs, targets, paths, list(mloss))
                 if callbacks.stop_training:
@@ -655,7 +652,9 @@ def parse_opt(known=False):
     parser.add_argument("--freeze", nargs="+", type=int, default=[0], help="Freeze layers: backbone=10, first3=0 1 2")
     parser.add_argument("--save-period", type=int, default=-1, help="Save checkpoint every x epochs (disabled if < 1)")
     parser.add_argument("--seed", type=int, default=0, help="Global training seed")
-    parser.add_argument("--vfm-cls-weights", type=str, default="", help="DINOv3 teacher weights path for VFM cls guider")
+    parser.add_argument(
+        "--vfm-cls-weights", type=str, default="", help="DINOv3 teacher weights path for VFM cls guider"
+    )
     parser.add_argument("--vfm-reg-weights", type=str, default="", help="Swin teacher weights path for VFM reg guider")
     parser.add_argument("--vfm-imgsz", type=int, default=224, help="input image size for VFM teachers")
     parser.add_argument("--local_rank", type=int, default=-1, help="Automatic DDP Multi-GPU argument, do not modify")
