@@ -1,6 +1,6 @@
 # Add or modify code through Du Shenyu
-import yaml
 import torch
+import yaml
 
 from models.yolo import Model
 
