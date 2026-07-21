@@ -42,7 +42,6 @@ keywords: object counting, regions, YOLO26, computer vision, Ultralytics, effici
 
          ```python
          import cv2
-
          from ultralytics import solutions
 
          cap = cv2.VideoCapture("path/to/video.mp4")

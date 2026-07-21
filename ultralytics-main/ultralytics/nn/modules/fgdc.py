@@ -16,10 +16,10 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from losses.vfm_guidance_loss import DualPathVFMGuidanceLoss
 
 from .conv import Conv, DWConv
 from .head import Detect
-from losses.vfm_guidance_loss import DualPathVFMGuidanceLoss
 
 
 class ChannelImportancePartition(nn.Module):
@@ -44,8 +44,8 @@ class ChannelImportancePartition(nn.Module):
 class FGDH(nn.Module):
     """Fine-Grained Enhanced Classification Head.
 
-    It combines a local texture stream and a context stream with compact bilinear
-    fusion, then predicts dense class logits for each feature-map location.
+    It combines a local texture stream and a context stream with compact bilinear fusion, then predicts dense class
+    logits for each feature-map location.
     """
 
     def __init__(self, c1: int, nc: int, hidden: int | None = None, compact_dim: int = 128):
@@ -83,9 +83,8 @@ class FGDH(nn.Module):
 class DualPathVFMGuider(nn.Module):
     """Training-time dual-path feature distillation helper.
 
-    Teacher features can be precomputed by external encoders and passed in as tensors.
-    This class intentionally does not force a specific teacher implementation so the
-    Detect graph remains export-friendly.
+    Teacher features can be precomputed by external encoders and passed in as tensors. This class intentionally does not
+    force a specific teacher implementation so the Detect graph remains export-friendly.
     """
 
     def __init__(
@@ -108,9 +107,11 @@ class DualPathVFMGuider(nn.Module):
         self.lambda_reg = lambda_reg
         self.cls_loss_name = self._normalize_loss_name(cls_loss)
         self.reg_loss_name = self._normalize_loss_name(reg_loss)
-        self.use_branch_specific_loss = self.cls_loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"} and (
-            self.reg_loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"}
-        )
+        self.use_branch_specific_loss = self.cls_loss_name in {
+            "branchspecific",
+            "branch_specific",
+            "dual_path_vfm",
+        } and (self.reg_loss_name in {"branchspecific", "branch_specific", "dual_path_vfm"})
         self.branch_guidance_loss = (
             DualPathVFMGuidanceLoss(
                 lambda_cls=lambda_cls,
@@ -304,7 +305,6 @@ class FGDCDetect(Detect):
             self.one2one_cv2 = copy.deepcopy(self.cv2)
             self.one2one_cv3 = copy.deepcopy(self.cv3)
 
-
     @staticmethod
     def _check_vfm_weight_paths(cls_weights: str | None, reg_weights: str | None) -> dict[str, bool]:
         """Record whether configured VFM teacher checkpoint paths exist."""
@@ -378,9 +378,7 @@ class FGDCDetect(Detect):
         if self.end2end:
             for i, box_head in enumerate(self.one2one_cv2):
                 box_head[-1].bias.data[:] = 2.0
-                cls_head = self.one2one_cv3[i].pred if isinstance(self.one2one_cv3[i], FGDH) else self.one2one_cv3[i][-1]
+                cls_head = (
+                    self.one2one_cv3[i].pred if isinstance(self.one2one_cv3[i], FGDH) else self.one2one_cv3[i][-1]
+                )
                 cls_head.bias.data[: self.nc] = math.log(5 / self.nc / (640 / self.stride[i]) ** 2)
-
-
-
-
