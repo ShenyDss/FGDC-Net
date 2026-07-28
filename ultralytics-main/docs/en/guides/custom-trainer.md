@@ -34,7 +34,7 @@ from ultralytics.models.yolo.detect import DetectionTrainer
 class CustomTrainer(DetectionTrainer):
     """A custom trainer that extends DetectionTrainer with additional functionality."""
 
-    pass  # Add your customizations here
+    # Add your customizations here
 
 
 model = YOLO("yolo26n.pt")
@@ -49,7 +49,6 @@ The [validation](../modes/val.md) step computes [precision](https://www.ultralyt
 
 ```python
 import numpy as np
-
 from ultralytics import YOLO
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.utils import LOGGER
@@ -112,7 +111,6 @@ To customize the loss, subclass the loss classes, model, and trainer:
 ```python
 import torch
 from torch import nn
-
 from ultralytics import YOLO
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.nn.tasks import DetectionModel
@@ -272,7 +270,6 @@ Different parts of the network can benefit from different [learning rates](https
 
 ```python
 import torch
-
 from ultralytics import YOLO
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.utils import LOGGER
@@ -323,7 +320,6 @@ For RT-DETR the pattern is the same with two refinements. The backbone length is
 ```python
 import torch
 from torch import nn
-
 from ultralytics import RTDETR
 from ultralytics.models.rtdetr.train import RTDETRTrainer
 from ultralytics.utils import LOGGER, colorstr
@@ -418,7 +414,6 @@ The conversion has to happen after the model is on the GPU but before DDP wraps 
 
 ```python
 from torch import nn
-
 from ultralytics import RTDETR
 from ultralytics.models.rtdetr.train import RTDETRTrainer
 
@@ -453,7 +448,6 @@ The default trainer clips gradients to `max_norm=10.0` in `optimizer_step()`, a 
 
 ```python
 import torch
-
 from ultralytics import RTDETR
 from ultralytics.models.rtdetr.train import RTDETRTrainer
 

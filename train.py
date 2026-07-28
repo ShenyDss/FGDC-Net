@@ -34,8 +34,8 @@ except ImportError:
 import numpy as np
 import torch
 import torch.distributed as dist
-import torch.nn as nn
 import yaml
+from torch import nn
 from torch.optim import lr_scheduler
 from tqdm import tqdm
 
@@ -49,8 +49,8 @@ from ultralytics.utils.patches import torch_load
 
 import val as validate  # for end-of-epoch mAP
 from models.experimental import attempt_load
-from models.yolo import Model
 from models.vfm_teachers import build_vfm_teachers
+from models.yolo import Model
 from utils.autoanchor import check_anchors
 from utils.autobatch import check_train_batch_size
 from utils.callbacks import Callbacks
@@ -237,9 +237,7 @@ def train(hyp, opt, device, callbacks):
             freeze=True,
         )
         detect_head.set_vfm_teachers(cls_teacher=cls_teacher, reg_teacher=reg_teacher)
-        LOGGER.info(
-            f"VFM teachers loaded: cls={opt.vfm_cls_weights or 'None'}, reg={opt.vfm_reg_weights or 'None'}"
-        )
+        LOGGER.info(f"VFM teachers loaded: cls={opt.vfm_cls_weights or 'None'}, reg={opt.vfm_reg_weights or 'None'}")
     amp = check_amp(model)  # check AMP
 
     # Freeze
@@ -491,8 +489,7 @@ def train(hyp, opt, device, callbacks):
                 mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
                 mem = f"{torch.cuda.memory_reserved() / 1e9 if torch.cuda.is_available() else 0:.3g}G"  # (GB)
                 pbar.set_description(
-                    ("%11s" * 2 + "%11.4g" * 9)
-                    % (f"{epoch}/{epochs - 1}", mem, *mloss, imgs.shape[-1])
+                    ("%11s" * 2 + "%11.4g" * 9) % (f"{epoch}/{epochs - 1}", mem, *mloss, imgs.shape[-1])
                 )
                 callbacks.run("on_train_batch_end", model, ni, imgs, targets, paths, list(mloss))
                 if callbacks.stop_training:
@@ -526,8 +523,7 @@ def train(hyp, opt, device, callbacks):
             # Update best mAP
             fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
-            if fi > best_fitness:
-                best_fitness = fi
+            best_fitness = max(best_fitness, fi)
             log_vals = list(mloss) + list(results) + lr
             callbacks.run("on_fit_epoch_end", log_vals, epoch, best_fitness, fi)
 
@@ -655,7 +651,9 @@ def parse_opt(known=False):
     parser.add_argument("--freeze", nargs="+", type=int, default=[0], help="Freeze layers: backbone=10, first3=0 1 2")
     parser.add_argument("--save-period", type=int, default=-1, help="Save checkpoint every x epochs (disabled if < 1)")
     parser.add_argument("--seed", type=int, default=0, help="Global training seed")
-    parser.add_argument("--vfm-cls-weights", type=str, default="", help="DINOv3 teacher weights path for VFM cls guider")
+    parser.add_argument(
+        "--vfm-cls-weights", type=str, default="", help="DINOv3 teacher weights path for VFM cls guider"
+    )
     parser.add_argument("--vfm-reg-weights", type=str, default="", help="Swin teacher weights path for VFM reg guider")
     parser.add_argument("--vfm-imgsz", type=int, default=224, help="input image size for VFM teachers")
     parser.add_argument("--local_rank", type=int, default=-1, help="Automatic DDP Multi-GPU argument, do not modify")
@@ -817,8 +815,8 @@ def main(opt, callbacks=Callbacks()):
             del hyp_GA[item]  # Remove the item from hyp_GA dictionary
 
         # Set lower_limit and upper_limit arrays to hold the search space boundaries
-        lower_limit = np.array([meta[k][1] for k in hyp_GA.keys()])
-        upper_limit = np.array([meta[k][2] for k in hyp_GA.keys()])
+        lower_limit = np.array([meta[k][1] for k in hyp_GA])
+        upper_limit = np.array([meta[k][2] for k in hyp_GA])
 
         # Create gene_ranges list to hold the range of values for each gene in the population
         gene_ranges = [(lower_limit[i], upper_limit[i]) for i in range(len(upper_limit))]
@@ -832,7 +830,7 @@ def main(opt, callbacks=Callbacks()):
             with open(ROOT / opt.resume_evolve, errors="ignore") as f:
                 evolve_population = yaml.safe_load(f)
                 for value in evolve_population.values():
-                    value = np.array([value[k] for k in hyp_GA.keys()])
+                    value = np.array([value[k] for k in hyp_GA])
                     initial_values.append(list(value))
 
         # If not resuming from a previous checkpoint, generate initial values from .yaml files in opt.evolve_population
@@ -841,7 +839,7 @@ def main(opt, callbacks=Callbacks()):
             for file_name in yaml_files:
                 with open(os.path.join(opt.evolve_population, file_name)) as yaml_file:
                     value = yaml.safe_load(yaml_file)
-                    value = np.array([value[k] for k in hyp_GA.keys()])
+                    value = np.array([value[k] for k in hyp_GA])
                     initial_values.append(list(value))
 
         # Generate random values within the search space for the rest of the population
