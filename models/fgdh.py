@@ -3,8 +3,8 @@
 """Fine-Grained Enhanced Classification Head for FGDC-Net."""
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from models.common import Conv, DWConv
 
@@ -18,13 +18,9 @@ class FGDH(nn.Module):
         hidden_channels: Internal stream width. Defaults to in_channels.
         compact_dim: Compact bilinear feature dimension before the classifier.
         dropout: Dropout probability before the final classifier.
-
-    Input:
-        F_in with shape (B, C, H, W)
-
-    Output:
-        Class probability vector with shape (B, num_classes) by default.
-        If dense=True, dense logits/probabilities with shape (B, num_classes, H, W).
+        Input: F_in with shape (B, C, H, W)
+        Output: Class probability vector with shape (B, num_classes) by default. If dense=True, dense
+            logits/probabilities with shape (B, num_classes, H, W).
     """
 
     def __init__(
@@ -75,8 +71,8 @@ class FGDH(nn.Module):
             x: Classification feature map with shape (B, C, H, W).
 
         Returns:
-            Softmax class probabilities with shape (B, num_classes), or dense
-            logits/probabilities with shape (B, num_classes, H, W) when dense=True.
+            Softmax class probabilities with shape (B, num_classes), or dense: logits/probabilities with shape (B,
+                num_classes, H, W) when dense=True.
         """
         # Extract local fine-grained cues such as boundaries and defect texture.
         feat_a = self.stream_a(x)

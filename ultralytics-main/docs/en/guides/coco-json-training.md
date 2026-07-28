@@ -37,7 +37,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-
 from ultralytics.data.dataset import DATASET_CACHE_VERSION, YOLODataset
 from ultralytics.data.utils import get_hash, load_dataset_cache_file, save_dataset_cache_file
 from ultralytics.utils import TQDM
@@ -218,7 +217,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-
 from ultralytics import YOLO
 from ultralytics.data.dataset import DATASET_CACHE_VERSION, YOLODataset
 from ultralytics.data.utils import get_hash, load_dataset_cache_file, save_dataset_cache_file

@@ -25,7 +25,7 @@ except ImportError:
 
     def SummaryWriter(*args):
         """Fall back to SummaryWriter returning None if TensorBoard is not installed."""
-        return None  # None = SummaryWriter(str)
+        return  # None = SummaryWriter(str)
 
 
 try:
@@ -260,7 +260,7 @@ class Loggers:
         if self.csv:
             file = self.save_dir / "results.csv"
             n = len(x) + 1  # number of cols
-            header = ("%20s," * n % tuple(["epoch", *self.keys])).rstrip(",")
+            header = ("%20s," * n % ("epoch", *self.keys)).rstrip(",")
             if file.exists():
                 lines = file.read_text().splitlines()
                 old_cols = len(lines[0].split(",")) if lines else 0
@@ -275,7 +275,7 @@ class Loggers:
             else:
                 s = header + "\n"
             with open(file, "a") as f:
-                f.write(s + ("%20.5g," * n % tuple([epoch, *vals])).rstrip(",") + "\n")
+                f.write(s + ("%20.5g," * n % (epoch, *vals)).rstrip(",") + "\n")
         if self.ndjson_console or self.ndjson_file:
             json_data = json.dumps(dict(epoch=epoch, **x), default=_json_default)
         if self.ndjson_console:
@@ -415,9 +415,9 @@ class GenericLogger:
         if self.csv:
             keys, vals = list(metrics.keys()), list(metrics.values())
             n = len(metrics) + 1  # number of cols
-            s = "" if self.csv.exists() else (("%23s," * n % tuple(["epoch", *keys])).rstrip(",") + "\n")  # header
+            s = "" if self.csv.exists() else (("%23s," * n % ("epoch", *keys)).rstrip(",") + "\n")  # header
             with open(self.csv, "a") as f:
-                f.write(s + ("%23.5g," * n % tuple([epoch, *vals])).rstrip(",") + "\n")
+                f.write(s + ("%23.5g," * n % (epoch, *vals)).rstrip(",") + "\n")
 
         if self.tb:
             for k, v in metrics.items():
