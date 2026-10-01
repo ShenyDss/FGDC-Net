@@ -57,7 +57,6 @@ This guide provides a comprehensive overview of three fundamental types of [data
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         cap = cv2.VideoCapture("path/to/video.mp4")
@@ -135,7 +134,6 @@ Example:
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
@@ -185,7 +183,6 @@ Use the following example to generate a bar plot:
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
@@ -235,7 +232,6 @@ Here's a quick example:
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
@@ -280,7 +276,6 @@ Example for tracking and updating a line graph:
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
