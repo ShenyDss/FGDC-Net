@@ -91,7 +91,6 @@ Except [`Similarity Search`](../guides/similarity-search.md), each Solution call
 
     ```python
     import cv2
-
     from ultralytics import solutions
 
     im0 = cv2.imread("path/to/img")
