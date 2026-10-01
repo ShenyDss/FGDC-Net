@@ -46,7 +46,6 @@ You can customize each parameter using the Python API, the command line interfac
 
         ```python
         import albumentations as A
-
         from ultralytics import YOLO
 
         # Load a model
@@ -397,7 +396,6 @@ Then launch the training with the Python API:
 
         ```python
         import albumentations as A
-
         from ultralytics import YOLO
 
         # Load a model
@@ -425,7 +423,6 @@ Then launch the training with the Python API:
 
         ```python
         import albumentations as A
-
         from ultralytics import YOLO
 
         # Load a model

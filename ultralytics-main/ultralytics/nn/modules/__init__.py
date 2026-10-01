@@ -77,6 +77,7 @@ from .conv import (
     RepConv,
     SpatialAttention,
 )
+from .fgdc import FGDH, ChannelImportancePartition, DualPathVFMGuider, FGDCDetect
 from .head import (
     OBB,
     OBB26,
@@ -94,7 +95,6 @@ from .head import (
     YOLOESegment26,
     v10Detect,
 )
-from .fgdc import ChannelImportancePartition, DualPathVFMGuider, FGDCDetect, FGDH
 from .transformer import (
     AIFI,
     MLP,
@@ -119,6 +119,7 @@ __all__ = (
     "CIB",
     "DFL",
     "ELAN1",
+    "FGDH",
     "MLP",
     "OBB",
     "OBB26",
@@ -143,6 +144,7 @@ __all__ = (
     "CBFuse",
     "CBLinear",
     "ChannelAttention",
+    "ChannelImportancePartition",
     "Classify",
     "Concat",
     "ContrastiveHead",
@@ -154,6 +156,8 @@ __all__ = (
     "DeformableTransformerDecoder",
     "DeformableTransformerDecoderLayer",
     "Detect",
+    "DualPathVFMGuider",
+    "FGDCDetect",
     "Focus",
     "GhostBottleneck",
     "GhostConv",
@@ -189,8 +193,4 @@ __all__ = (
     "YOLOESegment",
     "YOLOESegment26",
     "v10Detect",
-    "ChannelImportancePartition",
-    "DualPathVFMGuider",
-    "FGDCDetect",
-    "FGDH",
 )

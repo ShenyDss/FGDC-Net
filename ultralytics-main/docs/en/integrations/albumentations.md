@@ -87,7 +87,6 @@ After installing the necessary packages, you're ready to start using Albumentati
 
         ```python
         import albumentations as A
-
         from ultralytics import YOLO
 
         # Load a pretrained model
@@ -182,7 +181,6 @@ Here's an example with more advanced transforms:
 
 ```python
 import albumentations as A
-
 from ultralytics import YOLO
 
 # Load model
