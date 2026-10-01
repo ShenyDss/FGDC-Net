@@ -70,7 +70,6 @@ import time
 from pathlib import Path
 
 from tritonclient.http import InferenceServerClient
-
 from ultralytics import YOLO
 
 runtime = "docker"  # set to "podman" to use Podman
