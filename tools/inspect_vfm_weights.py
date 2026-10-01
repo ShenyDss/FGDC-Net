@@ -51,12 +51,16 @@ def summarize_state_dict(name, state_dict):
 
     if any(k.startswith("blocks.") for k in keys):
         print("detected_arch: ViT base patch16 style")
-        print("recommended_feature: final patch tokens after norm, drop cls token, reshape to Bx768x14x14 for 224 input")
+        print(
+            "recommended_feature: final patch tokens after norm, drop cls token, reshape to Bx768x14x14 for 224 input"
+        )
     if any(k.startswith("layers.") for k in keys):
         stage_norms = [k for k in keys if k.startswith("norm") and k.endswith(".weight")]
         print("detected_arch: Swin base patch4 window7 style")
         print(f"stage_norms: {stage_norms}")
-        print("recommended_feature: final stage feature, or multi-scale stage features; first use final Bx1024x7x7 for 224 input")
+        print(
+            "recommended_feature: final stage feature, or multi-scale stage features; first use final Bx1024x7x7 for 224 input"
+        )
 
 
 def try_timm_load(cls_sd, reg_sd, img_size):
