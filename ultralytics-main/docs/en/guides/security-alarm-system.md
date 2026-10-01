@@ -37,7 +37,6 @@ The Security Alarm System Project utilizing Ultralytics YOLO26 integrates advanc
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         cap = cv2.VideoCapture("path/to/video.mp4")
