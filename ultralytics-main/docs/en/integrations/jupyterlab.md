@@ -144,7 +144,6 @@ To train a YOLO26 model using JupyterLab:
 
     ```python
     import matplotlib
-
     from ultralytics.utils.plotting import plot_results
 
     matplotlib.use("inline")  # or 'notebook' for interactive
