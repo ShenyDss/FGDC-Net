@@ -120,7 +120,6 @@ This Python script uses [OpenCV (`cv2`)](https://opencv.org/) and Ultralytics YO
 ```python
 # Python
 import cv2
-
 from ultralytics import YOLO
 
 # Load the YOLO26 model
@@ -171,7 +170,6 @@ from collections import defaultdict
 
 import cv2
 import numpy as np
-
 from ultralytics import YOLO
 
 # Load the YOLO26 model
@@ -182,7 +180,7 @@ video_path = "path/to/video.mp4"
 cap = cv2.VideoCapture(video_path)
 
 # Store the track history
-track_history = defaultdict(lambda: [])
+track_history = defaultdict(list)
 
 # Loop through the video frames
 while cap.isOpened():
@@ -247,7 +245,6 @@ Finally, `cv2.destroyAllWindows()` closes all OpenCV windows after the threads f
 import threading
 
 import cv2
-
 from ultralytics import YOLO
 
 # Define model names and video sources
