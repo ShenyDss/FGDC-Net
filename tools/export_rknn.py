@@ -6,7 +6,6 @@ import argparse
 import random
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ONNX = ROOT / "runs/train/weld640_fgdc_vfm2/weights/best.onnx"
 DEFAULT_OUT = ROOT / "runs/train/weld640_fgdc_vfm2/weights"

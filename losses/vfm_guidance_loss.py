@@ -10,8 +10,8 @@ and spatial attention alignment.
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class DualPathVFMGuidanceLoss(nn.Module):
@@ -25,8 +25,7 @@ class DualPathVFMGuidanceLoss(nn.Module):
         max_tokens: Maximum token count for token-token relation matrices.
         eps: Numerical stability epsilon.
         reduction: Currently supports "mean" for multi-scale averaging.
-
-    Forward inputs:
+        Forward inputs:
         f_cls_student: Tensor or list of tensors, each with shape (B, C, H, W).
         f_reg_student: Tensor or list of tensors, each with shape (B, C, H, W).
         t_cls_teacher: Tensor or list of tensors aligned by scale.
@@ -247,4 +246,3 @@ if __name__ == "__main__":
         print(f"{name}: {value.item():.6f}")
     loss_dict["loss_vfm"].backward()
     print("backward ok")
-

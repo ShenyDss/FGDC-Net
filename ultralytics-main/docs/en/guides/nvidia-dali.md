@@ -112,9 +112,8 @@ This version exactly replicates the default Ultralytics preprocessing with cente
 !!! example "DALI pipeline with centered padding (recommended)"
 
     ```python
-    import nvidia.dali as dali
-    import nvidia.dali.fn as fn
-    import nvidia.dali.types as types
+    from nvidia import dali
+    from nvidia.dali import fn, types
 
 
     @dali.pipeline_def(batch_size=8, num_threads=4, device_id=0)
@@ -207,7 +206,6 @@ This applies to all external preprocessing paths — direct tensor input, video 
 
     ```python
     from nvidia.dali.plugin.pytorch import DALIGenericIterator
-
     from ultralytics import YOLO
 
     # Load model
@@ -239,9 +237,8 @@ For real-time video processing, use `fn.external_source` to feed frames from any
     === "Pipeline Definition"
 
         ```python
-        import nvidia.dali as dali
-        import nvidia.dali.fn as fn
-        import nvidia.dali.types as types
+        from nvidia import dali
+        from nvidia.dali import fn, types
 
 
         @dali.pipeline_def(batch_size=1, num_threads=4, device_id=0)
@@ -283,7 +280,6 @@ For real-time video processing, use `fn.external_source` to feed frames from any
         import cv2
         import numpy as np
         import torch
-
         from ultralytics import YOLO
 
         model = YOLO("yolo26n.engine")  # TensorRT model
@@ -337,9 +333,8 @@ Serialize the DALI pipeline for the Triton DALI backend:
 !!! example "Serialize DALI pipeline for Triton"
 
     ```python
-    import nvidia.dali as dali
-    import nvidia.dali.fn as fn
-    import nvidia.dali.types as types
+    from nvidia import dali
+    from nvidia.dali import fn, types
 
 
     @dali.pipeline_def(batch_size=8, num_threads=4, device_id=0)
