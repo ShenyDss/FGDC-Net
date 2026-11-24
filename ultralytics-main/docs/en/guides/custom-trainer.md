@@ -34,7 +34,7 @@ from ultralytics.models.yolo.detect import DetectionTrainer
 class CustomTrainer(DetectionTrainer):
     """A custom trainer that extends DetectionTrainer with additional functionality."""
 
-    pass  # Add your customizations here
+    # Add your customizations here
 
 
 model = YOLO("yolo26n.pt")
@@ -49,7 +49,6 @@ The [validation](../modes/val.md) step computes [precision](https://www.ultralyt
 
 ```python
 import numpy as np
-
 from ultralytics import YOLO
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.utils import LOGGER
@@ -92,16 +91,16 @@ This logs the mean F1 score across all classes and a per-class breakdown after e
 
     The validator provides access to many metrics through `self.validator.metrics.box`:
 
-    | Attribute | Description |
-    |---|---|
-    | `f1` | F1 score per class |
+    | Attribute       | Description                                                             |
+    | --------------- | ----------------------------------------------------------------------- |
+    | `f1`            | F1 score per class                                                      |
     | `image_metrics` | Per-image metrics dictionary with precision, recall, F1, TP, FP, and FN |
-    | `p` | Precision per class |
-    | `r` | Recall per class |
-    | `ap50` | AP at IoU 0.5 per class |
-    | `ap` | AP at IoU 0.5:0.95 per class |
-    | `mp`, `mr` | Mean precision and recall |
-    | `map50`, `map` | Mean AP metrics |
+    | `p`             | Precision per class                                                     |
+    | `r`             | Recall per class                                                        |
+    | `ap50`          | AP at IoU 0.5 per class                                                 |
+    | `ap`            | AP at IoU 0.5:0.95 per class                                            |
+    | `mp`, `mr`      | Mean precision and recall                                               |
+    | `map50`, `map`  | Mean AP metrics                                                         |
 
 ## Adding Class Weights
 
@@ -112,7 +111,6 @@ To customize the loss, subclass the loss classes, model, and trainer:
 ```python
 import torch
 from torch import nn
-
 from ultralytics import YOLO
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.nn.tasks import DetectionModel
@@ -215,12 +213,12 @@ model.train(data="coco8.yaml", epochs=20, trainer=CustomSaveTrainer)
 
     Common metrics available in `self.metrics` after validation include:
 
-    | Key | Description |
-    |---|---|
-    | `metrics/precision(B)` | Precision |
-    | `metrics/recall(B)` | Recall |
-    | `metrics/mAP50(B)` | mAP at IoU 0.5 |
-    | `metrics/mAP50-95(B)` | mAP at IoU 0.5:0.95 |
+    | Key                    | Description         |
+    | ---------------------- | ------------------- |
+    | `metrics/precision(B)` | Precision           |
+    | `metrics/recall(B)`    | Recall              |
+    | `metrics/mAP50(B)`     | mAP at IoU 0.5      |
+    | `metrics/mAP50-95(B)`  | mAP at IoU 0.5:0.95 |
 
 ## Freezing and Unfreezing the Backbone
 
@@ -272,7 +270,6 @@ Different parts of the network can benefit from different [learning rates](https
 
 ```python
 import torch
-
 from ultralytics import YOLO
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.utils import LOGGER
@@ -323,7 +320,6 @@ For RT-DETR the pattern is the same with two refinements. The backbone length is
 ```python
 import torch
 from torch import nn
-
 from ultralytics import RTDETR
 from ultralytics.models.rtdetr.train import RTDETRTrainer
 from ultralytics.utils import LOGGER, colorstr
@@ -418,7 +414,6 @@ The conversion has to happen after the model is on the GPU but before DDP wraps 
 
 ```python
 from torch import nn
-
 from ultralytics import RTDETR
 from ultralytics.models.rtdetr.train import RTDETRTrainer
 
@@ -453,7 +448,6 @@ The default trainer clips gradients to `max_norm=10.0` in `optimizer_step()`, a 
 
 ```python
 import torch
-
 from ultralytics import RTDETR
 from ultralytics.models.rtdetr.train import RTDETRTrainer
 

@@ -123,13 +123,13 @@ Larger models use more aggressive augmentation overall (higher [mixup](./yolo-da
 
     The checkpoints also contain parameters that were used in the internal training pipeline but are **not** exposed as user-configurable settings in `default.yaml`:
 
-    | Setting | Description | N | S | M | L | X |
-    |---|---|---|---|---|---|---|
-    | `muon_w` | Muon update weight in MuSGD | 0.528 | 0.436 | 0.436 | 0.436 | 0.436 |
-    | `sgd_w` | SGD update weight in MuSGD | 0.674 | 0.479 | 0.479 | 0.479 | 0.479 |
-    | `cls_w` | Internal classification weight | 2.74 | 3.48 | 3.48 | 3.48 | 3.48 |
-    | `o2m` | One-to-many head loss weight | 1.0 | 0.705 | 0.705 | 0.705 | 0.705 |
-    | `topk` | Top-k label assignment | 8 | 5 | 5 | 5 | 5 |
+    | Setting  | Description                    | N     | S     | M     | L     | X     |
+    | -------- | ------------------------------ | ----- | ----- | ----- | ----- | ----- |
+    | `muon_w` | Muon update weight in MuSGD    | 0.528 | 0.436 | 0.436 | 0.436 | 0.436 |
+    | `sgd_w`  | SGD update weight in MuSGD     | 0.674 | 0.479 | 0.479 | 0.479 | 0.479 |
+    | `cls_w`  | Internal classification weight | 2.74  | 3.48  | 3.48  | 3.48  | 3.48  |
+    | `o2m`    | One-to-many head loss weight   | 1.0   | 0.705 | 0.705 | 0.705 | 0.705 |
+    | `topk`   | Top-k label assignment         | 8     | 5     | 5     | 5     | 5     |
 
     These are recorded for reproducibility but do not need to be set when fine-tuning. See the [FAQ](#faq) for more details.
 

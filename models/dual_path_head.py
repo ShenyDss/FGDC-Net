@@ -5,7 +5,7 @@
 import math
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from models.common import Conv
 from models.fgdh import FGDH
@@ -103,7 +103,9 @@ class DualPathDetect(nn.Module):
             else nn.ModuleList(Conv(c, c, 3, 1) for c in proj_ch)
         )
         self.reg_stem = nn.ModuleList(Conv(c, c, 3, 1) for c in proj_ch)
-        self.cls_pred = nn.ModuleList(nn.Identity() if use_fgdh else nn.Conv2d(c, self.na * self.nc, 1) for c in proj_ch)
+        self.cls_pred = nn.ModuleList(
+            nn.Identity() if use_fgdh else nn.Conv2d(c, self.na * self.nc, 1) for c in proj_ch
+        )
         self.reg_pred = nn.ModuleList(nn.Conv2d(c, self.na * 4, 1) for c in proj_ch)
         self.obj_pred = nn.ModuleList(nn.Conv2d(c, self.na, 1) for c in proj_ch)
         vfm_cls_teacher_channels = 768
@@ -153,7 +155,9 @@ class DualPathDetect(nn.Module):
             feat = self.proj[i](x[i])
             cls_feat, reg_feat = self.partition[i](feat)
             if self.training and self.use_vfm:
-                fg_mask = self._build_vfm_fg_mask(self.vfm_targets, reg_feat.shape[0], reg_feat.shape[-2:], reg_feat.device, reg_feat.dtype)
+                fg_mask = self._build_vfm_fg_mask(
+                    self.vfm_targets, reg_feat.shape[0], reg_feat.shape[-2:], reg_feat.device, reg_feat.dtype
+                )
                 vfm_loss = self.vfm_guiders[i](
                     cls_feat,
                     reg_feat,

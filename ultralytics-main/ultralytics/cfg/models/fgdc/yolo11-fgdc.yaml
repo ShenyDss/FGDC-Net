@@ -1,5 +1,5 @@
 # Add or modify code through Du Shenyu
-﻿# Ultralytics 馃殌 AGPL-3.0 License - https://ultralytics.com/license
+# Ultralytics 馃殌 AGPL-3.0 License - https://ultralytics.com/license
 
 # Ultralytics YOLO11 object detection model with P3/8 - P5/32 outputs
 # Model docs: https://docs.ultralytics.com/models/yolo11
@@ -48,5 +48,5 @@ head:
   - [[-1, 10], 1, Concat, [1]] # cat head P5
   - [-1, 2, C3k2, [1024, True]] # 22 (P5/32-large)
 
-  - [[16, 19, 22], 1, FGDCDetect, [nc, {use_fgdh: true, fgdh_compact_dim: 128, use_vfm: false}]] # FGDCDetect(P3, P4, P5)
+  - [[16, 19, 22], 1, FGDCDetect, [nc, { use_fgdh: true, fgdh_compact_dim: 128, use_vfm: false }]] # FGDCDetect(P3, P4, P5)
 

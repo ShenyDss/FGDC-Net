@@ -58,7 +58,6 @@ A heatmap generated with [Ultralytics YOLO26](https://github.com/ultralytics/ult
 
         ```python
         import cv2
-
         from ultralytics import solutions
 
         cap = cv2.VideoCapture("path/to/video.mp4")
@@ -172,7 +171,6 @@ Yes, Ultralytics YOLO26 supports object tracking and heatmap generation concurre
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
@@ -199,7 +197,6 @@ You can visualize specific object classes by specifying the desired classes in t
 
 ```python
 import cv2
-
 from ultralytics import solutions
 
 cap = cv2.VideoCapture("path/to/video.mp4")
